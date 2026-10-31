@@ -15,10 +15,10 @@ const DOUYIN = 'https://www.douyin.com/user/MS4wLjABAAAArWDxkCgxKLOPmi8kLilz-FXm
 const gh = (path) => `https://github.com/${path}`;
 const items = [
   // 视频：封面从 seed-covers 复制。url 先用抖音主页占位，在后台换成单条视频链接。
-  { kind: 'video', title: 'HatchZip：原地解压压缩包', desc: '双击就在原地展开，不用再找解压到哪了。', url: DOUYIN, cover: 'hatchzip.jpg', date: '2026-10-25' },
-  { kind: 'video', title: 'PixelFX：开源像素特效库', desc: '给像素游戏加爆炸、火花和魔法，几行代码。', url: DOUYIN, cover: 'pixelfx.jpg', date: '2026-10-31' },
-  { kind: 'video', title: 'Pixel VFX Forge：一句话做像素特效', desc: '说一句话，生成一张能直接进游戏的特效。', url: DOUYIN, cover: 'pixel-vfx.jpg', date: '2026-10-28' },
-  { kind: 'video', title: 'TwinDesk：电脑手机合成一张桌子', desc: '鼠标推出屏幕就走进另一台电脑。免费开源。', url: DOUYIN, cover: 'twindesk.jpg', date: '2026-10-31' },
+  { kind: 'video', title: 'HatchZip 原地解压', desc: '', url: DOUYIN, cover: 'hatchzip.jpg', date: '2026-10-25' },
+  { kind: 'video', title: 'PixelFX 像素特效库', desc: '', url: DOUYIN, cover: 'pixelfx.jpg', date: '2026-10-31' },
+  { kind: 'video', title: '一句话做像素特效', desc: '', url: DOUYIN, cover: 'pixel-vfx.jpg', date: '2026-10-28' },
+  { kind: 'video', title: 'TwinDesk 桌面任意门', desc: '', url: DOUYIN, cover: 'twindesk.jpg', date: '2026-10-31' },
 
   // 开源项目：来自飞书表格“开源项目推荐”
   { kind: 'oss', title: 'pixelfx', desc: '开源像素特效库', url: gh('patch-gg/pixelfx'), tags: '游戏', date: '2026-10-31' },
@@ -43,8 +43,8 @@ const items = [
   { kind: 'oss', title: 'html-video', desc: '面向编程智能体的程序化视频工具', url: gh('nexu-io/html-video'), tags: '视频创作', date: '2026-07-06' },
 
   // 作品
-  { kind: 'work', title: 'Games', desc: '翻开一本手绘游戏册，开始玩。西瓜保卫战等 Unity 小游戏。', url: 'https://games.ailike.fun/', tone: 'red' },
-  { kind: 'work', title: 'Lab', desc: '浏览器里的互动视觉作品。', url: 'https://lab.ailike.fun/', tone: 'ink' },
+  { kind: 'work', title: 'Games', desc: '手绘游戏册', url: 'https://games.ailike.fun/', tone: 'red' },
+  { kind: 'work', title: 'Lab', desc: '互动视觉实验', url: 'https://lab.ailike.fun/', tone: 'ink' },
 
   // 归档
   { kind: 'archive', title: '终场预言局', desc: '2026 世界杯赛前预测', url: 'https://worldcup.ailike.fun/' },

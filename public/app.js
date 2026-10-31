@@ -23,7 +23,7 @@ function renderVideos(list) {
   $('#video-list').innerHTML = list.map(v => `
     <a class="vcard reveal in" href="${esc(v.url)}" target="_blank" rel="noreferrer" data-go="${v.id}:url">
       <div class="vcard-cover">${v.cover ? `<img src="/u/${esc(v.cover)}" alt="" loading="lazy">` : ''}<span class="play" aria-hidden="true">▶</span></div>
-      <h3>${esc(v.title)}</h3>${v.desc ? `<p>${esc(v.desc)}</p>` : ''}${v.date ? `<time class="mono" datetime="${esc(v.date)}">${fmtDate(v.date)}</time>` : ''}
+      <h3>${esc(v.title)}</h3>
     </a>`).join('');
 }
 
@@ -42,8 +42,7 @@ function renderOss() {
     const files = (it.files || []).map(f => `<a class="act act-dl" href="/d/${f.id}" download>↓ ${esc(f.name)} <small>${fmtSize(f.size)}</small></a>`).join('');
     const title = it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noreferrer" data-go="${it.id}:url">${esc(it.title)}</a>` : esc(it.title);
     return `<li class="row reveal in">
-      <span class="row-no mono">${String(list.indexOf(it) + 1).padStart(2, '0')}</span>
-      <div><h3 class="row-name">${title}</h3><p class="row-desc">${esc(it.desc)}</p>${it.date ? `<span class="row-date mono">${fmtDate(it.date)}</span>` : ''}</div>
+      <div><h3 class="row-name">${title}</h3><p class="row-desc">${esc(it.desc)}</p></div>
       <div class="row-tags">${tagsOf(it).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
       <div class="row-acts">${ext(it.url, it.id, 'url', it.url.includes('github.com') ? 'GitHub ↗' : '打开项目 ↗')}${ext(it.demo, it.id, 'demo', '在线体验 ↗')}${ext(it.video, it.id, 'video', '看讲解视频 ▶')}${files}</div>
     </li>`;
@@ -51,13 +50,13 @@ function renderOss() {
   const more = $('#more');
   const hidden = list.length - shown.length;
   more.hidden = hidden <= 0;
-  more.textContent = `展开全部 ${list.length} 个项目 ↓`;
+  more.textContent = `展开全部 ${list.length} 个 ↓`;
 }
 
 function renderWorks(list) {
   $('#work-list').innerHTML = list.map((w, i) => `
     <a class="wcard tone-${esc(w.tone || (i % 2 ? 'ink' : 'red'))} reveal" href="${esc(w.url)}" target="_blank" rel="noreferrer" data-go="${w.id}:url">
-      <span class="wcard-go" aria-hidden="true">→</span><h3>${esc(w.title)}</h3><p>${esc(w.desc)}</p>
+      <span class="wcard-go" aria-hidden="true">→</span><h3>${esc(w.title)}</h3>${w.desc ? `<p>${esc(w.desc)}</p>` : ''}
     </a>`).join('');
   if (!list.length) $('#works').hidden = true;
 }
@@ -80,7 +79,6 @@ fetch('/api/content').then(r => r.json()).then(({ items }) => {
   const by = k => items.filter(i => i.kind === k);
   const videos = by('video').filter(v => v.url);
   oss = by('oss');
-  $('#count').textContent = `${oss.length} 个开源项目 · ${videos.length} 条精选视频 · ${items.reduce((n, i) => n + (i.files || []).length, 0)} 份可下载资源`;
   renderVideos(videos); renderChips(); renderOss(); renderWorks(by('work')); renderArchive(by('archive'));
   observeReveals();
 }).catch(() => { $('#oss-list').innerHTML = '<li class="empty">内容加载失败，刷新试试。</li>'; });
