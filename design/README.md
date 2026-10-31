@@ -10,8 +10,8 @@ sh scripts/sync-design.sh      # 复制到 public/cd、sites/lab/cd、sites/game
 
 | 文件 | 作用 |
 |---|---|
-| `cd.css` | 颜色、字体、网格纸背景、顶栏、链接行、药丸、悬停预览、光标圈、返回条 |
-| `cd.js` | `data-roll` 文字滚动、`data-reveal` 淡入、`data-peek` 跟随小图、`data-magnet` 磁吸、光标圈 |
+| `cd.css` | 颜色、字体、网格纸背景、顶栏、链接行、药丸、悬停预览、返回条 |
+| `cd.js` | `data-roll` 文字滚动、`data-reveal` 淡入、`data-peek` 跟随小图、`data-magnet` 磁吸 |
 | `fonts/` | 抖音美好体（OFL） |
 | `img/` | 豆探透明姿势、红印章 favicon |
 
@@ -33,5 +33,5 @@ sh scripts/sync-design.sh      # 复制到 public/cd、sites/lab/cd、sites/game
 
 - 文字短。标题一行，说明一句，能不写就不写。
 - 一个强调色（朱红）。其他颜色只出现在作品自己的画面里。
-- 每个可点的东西都有反应：行变黑、文字上滚、箭头循环、光标变大。
+- 每个可点的东西都有反应：行变黑、文字上滚、箭头循环。
 - 动效必须尊重 `prefers-reduced-motion`。

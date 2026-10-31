@@ -42,7 +42,7 @@ function renderOss() {
     const name = it.url ? `<a class="stretch" href="${esc(it.url)}" target="_blank" rel="noreferrer" data-go="${it.id}:url" data-roll>${esc(it.title)}</a>` : `<span>${esc(it.title)}</span>`;
     return `<li class="cd-row oss">
       <span class="cd-no">${pad(i + 1)}</span><span class="cd-name">${name}</span>
-      <span class="cd-note">${esc(it.desc)}<span class="tg">${tagsOf(it).join(' · ')}</span></span>
+      <span class="cd-note">${esc(it.desc)}</span><span class="cd-tags">${tagsOf(it).join(' · ')}</span>
       <span class="acts">${act(it.demo, it.id, 'demo', '体验 ↗')}${act(it.video, it.id, 'video', '视频 ▶')}${files}</span>
       <span class="cd-arrow" style="--d:${(i % 6) * .35}s" aria-hidden="true">${it.url ? '↗' : ''}</span>
     </li>`;

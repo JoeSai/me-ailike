@@ -36,18 +36,6 @@
     if (peek && peek.classList.contains('on')) { peek.style.left = Math.min(e.clientX + 170, innerWidth - 130) + 'px'; peek.style.top = e.clientY + 'px'; }
   }, { passive: true });
 
-  // 光标圈：慢半拍跟随，碰到链接变大变红
-  function cursor() {
-    if (!fine || calm) return;
-    const c = document.body.appendChild(document.createElement('div')); c.className = 'cd-cursor';
-    let x = 0, y = 0, tx = 0, ty = 0, started = false;
-    addEventListener('pointermove', e => { tx = e.clientX; ty = e.clientY; if (!started) { x = tx; y = ty; started = true; c.classList.add('on'); } }, { passive: true });
-    addEventListener('pointerover', e => c.classList.toggle('big', !!e.target.closest('a, button, [role=button], .cd-row')));
-    document.documentElement.addEventListener('mouseleave', () => c.classList.remove('on'));
-    document.documentElement.addEventListener('mouseenter', () => started && c.classList.add('on'));
-    (function tick() { x += (tx - x) * .18; y += (ty - y) * .18; c.style.transform = `translate(${x}px, ${y}px)`; requestAnimationFrame(tick); })();
-  }
-
   // [data-magnet]：靠近时被吸过来一点
   function magnets(root) {
     if (!fine || calm) return;
@@ -60,6 +48,6 @@
 
   function init(root = document) { roll(root); reveal(root); peeks(root); magnets(root); }
   window.CD = { init };
-  const start = () => { init(); cursor(); };
+  const start = () => init();
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start();
 })();

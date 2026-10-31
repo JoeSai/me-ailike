@@ -33,13 +33,14 @@
 .chip small { font-family: var(--cd-mono); opacity: .55; margin-left: 4px; }
 .search input { width: min(200px, 100%); padding: 6px 2px; border: 0; border-bottom: 1.5px solid var(--cd-ink); background: none; font: inherit; border-radius: 0; }
 .search input:focus { outline: none; border-color: var(--cd-red); }
-.oss.cd-row { grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1.4fr) auto auto; }
+.oss.cd-row { grid-template-columns: 34px minmax(0, 200px) minmax(0, 1fr) 120px 110px 24px; align-items: baseline; }
+.cd-tags { font: 12px var(--cd-mono); opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cd-row .acts { justify-content: flex-end; white-space: nowrap; }
 .cd-row .stretch::after { content: ""; position: absolute; inset: 0; z-index: 1; }
 .cd-row .acts { position: relative; z-index: 2; display: flex; gap: 14px; font-size: 13px; }
 .cd-row .acts a { border-bottom: 1px solid currentColor; }
 .cd-row .acts a:hover { color: var(--cd-red); }
 .cd-row:hover .acts a:hover { color: var(--cd-paper); border-color: var(--cd-red); }
-.cd-row .tg { margin-left: 10px; font: 12px var(--cd-mono); opacity: .7; }
 .more { display: block; width: 100%; margin-top: 18px; padding: 12px; border: 1.5px dashed var(--cd-ink); background: none; font-weight: 600; transition: background .2s, color .2s; }
 .more:hover { background: var(--cd-ink); color: var(--cd-paper); }
 .empty { padding: 28px 0; color: var(--cd-mute); }
@@ -64,10 +65,10 @@ button.cd-row { width: 100%; text-align: left; background: none; border-top: 0; 
   .qr { justify-self: start; }
 }
 @media (max-width: 720px) {
-  .oss.cd-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .oss.cd-row { grid-template-columns: minmax(0, 1fr) 24px; }
   .oss.cd-row .cd-no { display: none; }
-  .oss.cd-row .cd-note { grid-column: 1; }
-  .oss.cd-row .acts { grid-column: 1 / -1; grid-row: 3; }
+  .oss.cd-row .cd-note, .oss.cd-row .cd-tags { grid-column: 1; }
+  .oss.cd-row .acts { grid-column: 1 / -1; justify-content: flex-start; }
   .vcard { flex-basis: 62%; }
   .mascot { width: 84px; top: 24px; }
 }
