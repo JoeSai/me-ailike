@@ -1,0 +1,6 @@
+data
+_backup
+assets-src
+.git
+.admin-password
+.env

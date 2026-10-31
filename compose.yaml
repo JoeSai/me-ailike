@@ -1,0 +1,25 @@
+name: personal-site
+
+services:
+  web:
+    build:
+      context: .
+    container_name: personal-site-web   # Caddy 按这个名字转发到 :80，不要改
+    restart: unless-stopped
+    expose:
+      - "80"
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}   # 仅首次启动用，之后密码哈希在 data/auth.json
+    volumes:
+      - ./data:/data
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    networks:
+      - caddy
+
+networks:
+  caddy:
+    external: true
+    name: link-summary-tool_default

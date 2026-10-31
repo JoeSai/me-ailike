@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>后台 · 代码侦探</title>
+<style>
+:root{--paper:#efe9dc;--p2:#e5ddcb;--ink:#1c1b18;--mute:#6f6a5e;--line:rgba(28,27,24,.18);--red:#d63f26;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1.5px solid var(--ink);background:none;border-radius:8px;padding:6px 14px}
+button:hover{background:var(--ink);color:var(--paper)}button.primary{background:var(--red);border-color:var(--red);color:var(--paper)}button.primary:hover{background:var(--ink);border-color:var(--ink)}
+button.danger{border-color:var(--red);color:var(--red)}button.danger:hover{background:var(--red);color:var(--paper)}button.small{padding:2px 10px;font-size:13px}
+input,select,textarea{width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fbf8f0}input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink)}
+textarea{min-height:70px;resize:vertical}label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 24px;border-bottom:2px solid var(--ink);position:sticky;top:0;background:var(--paper);z-index:5}
+header h1{margin:0;font-size:18px}header nav{display:flex;gap:8px;flex-wrap:wrap}header nav button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+main{max-width:1000px;margin:0 auto;padding:20px 24px 80px}
+#login{max-width:340px;margin:18vh auto;padding:0 24px}#login h1{font-size:28px}
+.sec{margin-top:28px}.sec h2{display:flex;justify-content:space-between;align-items:center;font-size:18px;margin:0 0 8px;padding-bottom:6px;border-bottom:1.5px solid var(--ink)}
+.item{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.item.hid{opacity:.5}
+.thumb{width:48px;height:64px;background:var(--p2) center/cover;border-radius:4px}.item b{display:block}.item small{color:var(--mute)}.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.sheet{position:fixed;inset:0;background:rgba(28,27,24,.45);display:none;justify-content:flex-end;z-index:20}.sheet.on{display:flex}
+.panel{width:min(520px,100%);height:100%;overflow:auto;background:var(--paper);padding:20px 24px 40px;box-shadow:-8px 0 0 var(--ink)}
+.panel h2{margin:0 0 4px}.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.checks{display:flex;gap:16px;margin-top:14px}.checks label{display:flex;gap:6px;align-items:center;margin:0;color:var(--ink)}.checks input{width:auto}
+.files{margin-top:8px}.files div{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px;word-break:break-all}
+.bar{height:8px;background:var(--p2);border-radius:4px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--red)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.card{border:1.5px solid var(--ink);padding:12px 14px;border-radius:10px;background:#fbf8f0}.card b{font-size:28px;display:block;line-height:1.1}.card span{color:var(--mute);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.msg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:999px;z-index:30;opacity:0;pointer-events:none;transition:opacity .2s}.msg.on{opacity:1}
+</style></head><body>
+<div id="login" hidden><h1>代码侦探 · 后台</h1><label for="pw">密码</label><input id="pw" type="password" autocomplete="current-password"><p><button class="primary" id="go">登录</button></p><p id="err" style="color:var(--red)"></p></div>
+<div id="app" hidden>
+<header><h1>代码侦探 · 后台</h1><nav><button data-tab="content" aria-pressed="true">内容</button><button data-tab="stats" aria-pressed="false">统计</button><a href="/" target="_blank"><button>看主页 ↗</button></a></nav></header>
+<main><div id="content"></div><div id="stats" hidden></div></main>
+<div class="sheet" id="sheet"><div class="panel" id="panel"></div></div>
+</div><div class="msg" id="msg"></div>
+<script>
+const $=s=>document.querySelector(s);
+const KINDS={video:'视频',oss:'开源项目',work:'作品',archive:'旧作'};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const size=n=>n>=1048576?(n/1048576).toFixed(1)+' MB':n>=1024?Math.round(n/1024)+' KB':n+' B';
+function toast(t){const m=$('#msg');m.textContent=t;m.classList.add('on');setTimeout(()=>m.classList.remove('on'),2200)}
+async function api(path,opt={}){
+  const r=await fetch('/api/admin/'+path,{...opt,headers:{'X-Admin':'1',...(opt.body&&typeof opt.body==='string'?{'Content-Type':'application/json'}:{}),...opt.headers}});
+  if(r.status===401){showLogin();throw new Error('login')}
+  const j=await r.json().catch(()=>({}));if(!r.ok){toast(j.error||'出错了');throw new Error(j.error)}return j}
+function showLogin(){$('#app').hidden=true;$('#login').hidden=false;$('#pw').focus()}
+$('#go').onclick=async()=>{
+  const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json','X-Admin':'1'},body:JSON.stringify({password:$('#pw').value})});
+  const j=await r.json();if(!r.ok){$('#err').textContent=j.error;return}$('#login').hidden=true;$('#app').hidden=false;load()};
+$('#pw').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+
+let data={items:[]};
+async function load(){data=await api('items');renderContent()}
+function renderContent(){
+  const used=data.used/data.quota*100;
+  $('#content').innerHTML=`<p style="color:var(--mute)">附件已用 ${size(data.used)} / ${size(data.quota)}，单个文件上限 ${size(data.maxFile)}。</p><div class="bar"><i style="width:${Math.min(100,used)}%"></i></div>`+
+  Object.entries(KINDS).map(([k,name])=>{
+    const list=data.items.filter(i=>i.kind===k);
+    return `<section class="sec"><h2>${name} <span><small style="color:var(--mute);font-weight:400">${list.length} 条</small> <button class="small primary" data-new="${k}">＋ 新增</button></span></h2>`+
+    (list.map((i,idx)=>`<div class="item ${i.hidden?'hid':''}"><div class="thumb" style="${i.cover?`background-image:url(/u/${esc(i.cover)})`:''}"></div>
+      <div><b>${esc(i.title)}${i.hidden?' （已隐藏）':''}</b><small>${esc(i.desc||i.url||'')} ${i.files.length?` · ${i.files.length} 个附件`:''}</small></div>
+      <div class="acts"><button class="small" data-up="${i.id}" ${idx===0?'disabled':''}>↑</button><button class="small" data-down="${i.id}" ${idx===list.length-1?'disabled':''}>↓</button><button class="small" data-edit="${i.id}">编辑</button></div></div>`).join('')||'<p style="color:var(--mute)">还没有内容</p>')+'</section>'}).join('')}
+$('#content').onclick=async e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.new)return edit({kind:b.dataset.new,title:'',desc:'',url:'',demo:'',video:'',tags:'',cover:'',tone:'',date:'',sort:0,hidden:0,files:[]});
+  if(b.dataset.edit)return edit(data.items.find(i=>i.id==b.dataset.edit));
+  const dir=b.dataset.up?-1:b.dataset.down?1:0;if(!dir)return;
+  const id=+(b.dataset.up||b.dataset.down),it=data.items.find(i=>i.id===id),list=data.items.filter(i=>i.kind===it.kind),i=list.indexOf(it),o=list[i+dir];if(!o)return;
+  // 交换 sort；相同时重排整组
+  const order=list.slice();order.splice(i,1);order.splice(i+dir,0,it);
+  await Promise.all(order.map((x,n)=>api('items/'+x.id,{method:'PUT',body:JSON.stringify({...x,sort:(order.length-n)*10})})));load()};
+
+let cur=null;
+function edit(it){
+  cur={...it,files:[...(it.files||[])]};const k=cur.kind,isOss=k==='oss',isVid=k==='video',isWork=k==='work';
+  $('#panel').innerHTML=`<h2>${cur.id?'编辑':'新增'}${KINDS[k]}</h2>
+  <label>标题</label><input id="f-title" value="${esc(cur.title)}">
+  <label>${isVid?'一句话介绍':'简介'}</label><textarea id="f-desc">${esc(cur.desc)}</textarea>
+  <label>${isVid?'视频链接（抖音）':isOss?'项目链接（GitHub 等）':'链接'}</label><input id="f-url" value="${esc(cur.url)}" placeholder="https://">
+  ${isOss?`<label>在线体验链接（可空）</label><input id="f-demo" value="${esc(cur.demo)}" placeholder="https://"><label>讲解视频链接（可空）</label><input id="f-video" value="${esc(cur.video)}" placeholder="https://">
+  <label>类型标签（用逗号隔开）</label><input id="f-tags" value="${esc(cur.tags)}" placeholder="游戏,美术">`:''}
+  ${isWork?`<label>卡片底色</label><select id="f-tone">${[['','自动'],['red','朱红'],['ink','墨黑'],['paper','纸色'],['mint','薄荷']].map(([v,n])=>`<option value="${v}" ${cur.tone===v?'selected':''}>${n}</option>`).join('')}</select>`:''}
+  <div class="row2"><div><label>日期</label><input id="f-date" type="date" value="${esc(cur.date)}"></div><div></div></div>
+  ${isVid?`<label>封面（竖版 3:4，png / jpg / webp）</label><div id="cover-prev" class="thumb" style="width:90px;height:120px;${cur.cover?`background-image:url(/u/${esc(cur.cover)})`:''}"></div><input id="f-cover" type="file" accept="image/*" style="margin-top:6px">`:''}
+  ${isOss?`<label>下载附件</label><div class="files" id="files"></div>${cur.id?`<input id="f-file" type="file" style="margin-top:8px"><small style="color:var(--mute)">选择文件后自动上传，单个不超过 ${size(data.maxFile)}</small>`:'<small style="color:var(--mute)">先保存，再上传附件</small>'}`:''}
+  <div class="checks"><label><input type="checkbox" id="f-hidden" ${cur.hidden?'checked':''}> 在主页隐藏</label></div>
+  <p style="display:flex;gap:8px;margin-top:22px"><button class="primary" id="save">保存</button><button id="cancel">取消</button>${cur.id?'<button class="danger" id="del" style="margin-left:auto">删除</button>':''}</p>`;
+  $('#sheet').classList.add('on');renderFiles();
+  $('#cancel').onclick=()=>$('#sheet').classList.remove('on');
+  $('#save').onclick=save;if($('#del'))$('#del').onclick=del;
+  if($('#f-cover'))$('#f-cover').onchange=async e=>{const f=e.target.files[0];if(!f)return;const j=await upload(f,'cover');cur.cover=j.cover;$('#cover-prev').style.backgroundImage=`url(/u/${j.cover})`};
+  if($('#f-file'))$('#f-file').onchange=async e=>{for(const f of e.target.files){toast('上传中：'+f.name);const j=await upload(f,'file',cur.id);cur.files.push(j)}e.target.value='';renderFiles();toast('上传完成');load()};
+}
+function upload(file,as,item){return api(`upload?as=${as}&name=${encodeURIComponent(file.name)}${item?'&item='+item:''}`,{method:'PUT',body:file,headers:{'Content-Type':'application/octet-stream'}})}
+function renderFiles(){const el=$('#files');if(!el)return;el.innerHTML=cur.files.map(f=>`<div><span>${esc(f.name)} · ${size(f.size)}${f.downloads!=null?` · 下载 ${f.downloads} 次`:''}</span><button class="small danger" data-rm="${f.id}">删除</button></div>`).join('')||'<small style="color:var(--mute)">还没有附件</small>';
+  el.onclick=async e=>{const b=e.target.closest('[data-rm]');if(!b||!confirm('删除这个附件？'))return;await api('files/'+b.dataset.rm,{method:'DELETE'});cur.files=cur.files.filter(f=>f.id!=b.dataset.rm);renderFiles();load()}}
+async function save(){
+  const g=id=>$('#'+id)?.value??cur[id.slice(2)];
+  const body={...cur,title:g('f-title'),desc:g('f-desc'),url:g('f-url'),demo:g('f-demo'),video:g('f-video'),tags:g('f-tags'),tone:g('f-tone'),date:g('f-date'),hidden:$('#f-hidden').checked?1:0};
+  if(cur.id)await api('items/'+cur.id,{method:'PUT',body:JSON.stringify(body)});
+  else{const j=await api('items',{method:'POST',body:JSON.stringify({...body,sort:0})});cur.id=j.id;
+    if(cur.kind==='oss'){toast('已保存，可以继续上传附件');await load();return edit(data.items.find(i=>i.id===j.id))}}
+  $('#sheet').classList.remove('on');toast('已保存');load()}
+async function del(){if(!confirm(`删除“${cur.title}”？附件会一起删除，不能恢复。`))return;await api('items/'+cur.id,{method:'DELETE'});$('#sheet').classList.remove('on');toast('已删除');load()}
+$('#sheet').onclick=e=>{if(e.target.id==='sheet')$('#sheet').classList.remove('on')};
+
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#content').hidden=b.dataset.tab!=='content';$('#stats').hidden=b.dataset.tab!=='stats';if(b.dataset.tab==='stats')loadStats()});
+async function loadStats(days=30){
+  const s=await api('stats?days='+days);const by={};for(const r of s.rows){(by[r.key]??={})[r.day]=r.n}
+  const sum=(k,from)=>Object.entries(by[k]||{}).filter(([d])=>d>=from).reduce((a,[,n])=>a+n,0);
+  const day=o=>new Date(Date.now()+8*36e5-o*864e5).toISOString().slice(0,10);
+  const clicks={};for(const k of Object.keys(by)){if(k.startsWith('go:')){const [,id,f]=k.split(':');(clicks[id]??={total:0,f:{}});const t=sum(k,'0');clicks[id].total+=t;clicks[id].f[f]=t}}
+  const top=Object.entries(clicks).sort((a,b)=>b[1].total-a[1].total).slice(0,15);
+  const dates=[];for(let i=days-1;i>=0;i--)dates.push(day(i));const max=Math.max(1,...dates.map(d=>by.view?.[d]||0));
+  const W=800,H=140,bw=W/dates.length;
+  $('#stats').innerHTML=`<div class="cards">
+    <div class="card"><b>${sum('view',day(0))}</b><span>今日访问（${sum('uv',day(0))} 人）</span></div>
+    <div class="card"><b>${sum('view',day(6))}</b><span>近 7 天访问（${sum('uv',day(6))} 人）</span></div>
+    <div class="card"><b>${sum('view','0')}</b><span>近 ${days} 天访问（${sum('uv','0')} 人）</span></div>
+    <div class="card"><b>${sum('dl','0')}</b><span>附件下载</span></div>
+    <div class="card"><b>${sum('copy:wechat','0')}</b><span>复制微信号</span></div></div>
+  <section class="sec"><h2>每日访问</h2><svg viewBox="0 0 ${W} ${H+18}" width="100%" role="img" aria-label="每日访问柱状图">${dates.map((d,i)=>{const v=by.view?.[d]||0,h=v/max*H;return `<rect x="${i*bw+1}" y="${H-h}" width="${bw-2}" height="${h}" fill="#d63f26"><title>${d}：${v}</title></rect>`}).join('')}<text x="0" y="${H+14}" font-size="11" fill="#6f6a5e">${dates[0]}</text><text x="${W}" y="${H+14}" font-size="11" text-anchor="end" fill="#6f6a5e">${dates.at(-1)}</text></svg></section>
+  <section class="sec"><h2>点击最多的条目</h2><table><tr><th>条目</th><th class="n">点击</th></tr>${top.map(([id,c])=>`<tr><td>${esc(s.items[id]||'（已删除）')}</td><td class="n">${c.total}</td></tr>`).join('')||'<tr><td colspan=2>还没有数据</td></tr>'}</table></section>
+  <section class="sec"><h2>下载最多的附件</h2><table><tr><th>附件</th><th>所属项目</th><th class="n">累计下载</th></tr>${s.files.map(f=>`<tr><td>${esc(f.name)}</td><td>${esc(f.item)}</td><td class="n">${f.downloads}</td></tr>`).join('')||'<tr><td colspan=3>还没有附件</td></tr>'}</table></section>
+  <section class="sec"><h2>社媒入口点击</h2><table>${['social:douyin','social:xhs'].map(k=>`<tr><td>${k.endsWith('douyin')?'抖音':'小红书'}</td><td class="n">${sum(k,'0')}</td></tr>`).join('')}</table></section>
+  <p style="color:var(--mute);font-size:13px">统计只记次数，不用 cookie，不保存 IP。“人”按每天 IP+浏览器的哈希去重，仅供参考。</p>`}
+
+fetch('/api/admin/items',{headers:{'X-Admin':'1'}}).then(r=>{if(r.status===401)showLogin();else{$('#app').hidden=false;r.json().then(j=>{data=j;renderContent()})}});
+</script></body></html>
