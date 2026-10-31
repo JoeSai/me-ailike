@@ -43,8 +43,8 @@ const items = [
   { kind: 'oss', title: 'html-video', desc: '面向编程智能体的程序化视频工具', url: gh('nexu-io/html-video'), tags: '视频创作', date: '2026-07-06' },
 
   // 作品
-  { kind: 'work', title: 'Games', desc: '手绘游戏册', url: 'https://games.ailike.fun/', tone: 'red' },
-  { kind: 'work', title: 'Lab', desc: '互动视觉实验', url: 'https://lab.ailike.fun/', tone: 'ink' },
+  { kind: 'work', title: 'Games', desc: '手绘游戏册', url: 'https://games.ailike.fun/', cover: 'games.webp' },
+  { kind: 'work', title: 'Lab', desc: '互动视觉实验', url: 'https://lab.ailike.fun/', cover: 'lab.webp' },
 
   // 归档
   { kind: 'archive', title: '终场预言局', desc: '2026 世界杯赛前预测', url: 'https://worldcup.ailike.fun/' },

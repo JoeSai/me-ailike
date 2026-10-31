@@ -1,0 +1,120 @@
+/* 代码侦探 · 共享风格 v1
+   一份源文件，scripts/sync-design.sh 同步到各站的 cd/ 目录。改这里，各站一起变。
+   用法见 design/README.md */
+@font-face { font-family: "CD Display"; src: url("./fonts/DouyinSansBold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+:root {
+  --cd-paper: #efe9dc;
+  --cd-paper-2: #e5ddcb;
+  --cd-ink: #1c1b18;
+  --cd-mute: #77715f;
+  --cd-line: rgba(28, 27, 24, .14);
+  --cd-grid: rgba(28, 27, 24, .055);
+  --cd-red: #d63f26;
+  --cd-mint: #7cc4b0;
+  --cd-display: "CD Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --cd-body: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --cd-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --cd-gutter: clamp(18px, 4vw, 48px);
+  --cd-max: 1080px;
+  --cd-ease: cubic-bezier(.22, 1, .36, 1);
+  --cd-spring: cubic-bezier(.3, 1.6, .5, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 64px; -webkit-text-size-adjust: 100%; }
+body.cd { margin: 0; color: var(--cd-ink); font: 15px/1.6 var(--cd-body); overflow-x: hidden;
+  background: radial-gradient(60vw 40vh at 8% -5%, rgba(214, 63, 38, .07), transparent 70%), radial-gradient(50vw 40vh at 100% 30%, rgba(124, 196, 176, .12), transparent 70%),
+    linear-gradient(var(--cd-grid) 1px, transparent 1px) 0 0 / 44px 44px, linear-gradient(90deg, var(--cd-grid) 1px, transparent 1px) 0 0 / 44px 44px, var(--cd-paper); }
+.cd a { color: inherit; text-decoration: none; }
+.cd img { display: block; max-width: 100%; }
+.cd button { font: inherit; color: inherit; cursor: pointer; }
+.cd ::selection { background: var(--cd-red); color: var(--cd-paper); }
+.cd :focus-visible { outline: 2px solid var(--cd-red); outline-offset: 3px; }
+.cd-mono { font-family: var(--cd-mono); letter-spacing: .02em; }
+.cd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.cd-wrap { max-width: var(--cd-max); margin: 0 auto; padding-inline: var(--cd-gutter); }
+
+/* 顶栏：红点 + 名字，右侧几个短链接 */
+.cd-bar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--cd-gutter);
+  font: 13px var(--cd-mono); background: color-mix(in srgb, var(--cd-paper) 80%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.cd-brand { display: inline-flex; align-items: center; gap: 8px; letter-spacing: .06em; }
+.cd-brand::before { content: ""; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--cd-red); animation: cd-pulse 2.4s ease-out infinite; }
+.cd-brand b { font: 700 15px var(--cd-display); letter-spacing: 0; }
+.cd-brand span { color: var(--cd-mute); }
+.cd-nav { display: flex; gap: clamp(14px, 3vw, 28px); }
+@keyframes cd-pulse { 0% { box-shadow: 0 0 0 0 rgba(214, 63, 38, .45); } 70%, 100% { box-shadow: 0 0 0 9px rgba(214, 63, 38, 0); } }
+
+/* 文字滚动：悬停时文字上滚，下面一行红色顶上来（cd.js 自动包裹 [data-roll]） */
+.cd-roll { display: inline-block; overflow: hidden; vertical-align: bottom; height: 1.4em; line-height: 1.4; }
+.cd-roll > span { display: block; transition: transform .45s var(--cd-ease); }
+.cd-roll > span + span { color: var(--cd-red); }
+a:hover > .cd-roll > span, button:hover > .cd-roll > span, .cd-row:hover .cd-roll > span, .cd-roll:hover > span { transform: translateY(-100%); }
+
+/* 标题：一行，克制 */
+.cd-title { margin: 0; font: 700 clamp(28px, 4.6vw, 48px)/1.1 var(--cd-display); letter-spacing: -.01em; }
+.cd-title mark { background: none; color: var(--cd-red); }
+.cd-sub { margin: 10px 0 0; color: var(--cd-mute); }
+.cd-h { display: flex; align-items: baseline; gap: 14px; margin: 0 0 6px; font: 700 20px/1.2 var(--cd-display); }
+.cd-h i { flex: 1; align-self: center; height: 1px; background: var(--cd-line); position: relative; overflow: hidden; }
+.cd-h i::after { content: ""; position: absolute; inset: 0; width: 30%; background: var(--cd-red); transform: translateX(-100%); animation: cd-scan 5s var(--cd-ease) infinite; }
+.cd-h small { font: 12px var(--cd-mono); color: var(--cd-mute); }
+@keyframes cd-scan { 0%, 55% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+
+/* 链接行：编号 · 名称 · 一句话 · 箭头。整站的主要界面 */
+.cd-rows { list-style: none; margin: 0; padding: 0; }
+.cd-row { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1.2fr) minmax(0, 1.6fr) auto; gap: 4px 18px; align-items: baseline; padding: 14px 4px; border-bottom: 1px solid var(--cd-line); overflow: hidden; isolation: isolate; transition: padding .35s var(--cd-ease); }
+.cd-row::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--cd-ink); transform: scaleX(0); transform-origin: left; transition: transform .45s var(--cd-ease); }
+.cd-row:hover { padding-inline: 14px; color: var(--cd-paper); }
+.cd-row:hover::before { transform: scaleX(1); }
+.cd-row:hover .cd-note, .cd-row:hover .cd-no { color: color-mix(in srgb, var(--cd-paper) 65%, transparent); }
+.cd-row:hover .cd-roll > span + span { color: var(--cd-paper); }
+.cd-no { font: 12px var(--cd-mono); color: var(--cd-mute); transition: color .3s; }
+.cd-name { font: 700 18px/1.4 var(--cd-display); }
+.cd-note { color: var(--cd-mute); font-size: 14px; transition: color .3s; }
+.cd-arrow { display: inline-block; font-family: var(--cd-mono); animation: cd-nudge 3.2s var(--cd-ease) infinite; animation-delay: var(--d, 0s); }
+.cd-row:hover .cd-arrow, a:hover > .cd-arrow { animation: cd-fly .6s var(--cd-ease) infinite; color: var(--cd-red); }
+@keyframes cd-nudge { 0%, 70%, 100% { transform: translateX(0); } 80% { transform: translateX(5px); } 90% { transform: translateX(0); } }
+@keyframes cd-fly { 0% { transform: translateX(0); opacity: 1; } 49% { transform: translateX(14px); opacity: 0; } 50% { transform: translateX(-14px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+
+/* 药丸按钮与小标签 */
+.cd-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border: 1.5px solid var(--cd-ink); border-radius: 999px; font: 600 14px var(--cd-body); background: none; transition: background .25s, color .25s, border-color .25s; }
+.cd-pill:hover { background: var(--cd-ink); color: var(--cd-paper); }
+.cd-pill.red { background: var(--cd-red); border-color: var(--cd-red); color: var(--cd-paper); }
+.cd-pill.red:hover { background: var(--cd-ink); border-color: var(--cd-ink); }
+.cd-tag { font: 12px var(--cd-mono); padding: 1px 8px; border: 1px solid var(--cd-line); border-radius: 4px; color: var(--cd-mute); }
+.cd-chip { padding: 3px 12px; border: 1.5px solid var(--cd-line); border-radius: 999px; background: none; font-size: 13px; transition: all .2s; }
+.cd-chip:hover { border-color: var(--cd-ink); }
+.cd-chip[aria-pressed="true"] { background: var(--cd-ink); border-color: var(--cd-ink); color: var(--cd-paper); }
+
+/* 悬停预览：鼠标跟随的小图 */
+.cd-peek { position: fixed; left: 0; top: 0; z-index: 60; width: 220px; aspect-ratio: 4 / 3; pointer-events: none; border-radius: 8px; overflow: hidden; background: var(--cd-paper-2) center / cover; box-shadow: 0 0 0 1.5px var(--cd-ink), 0 14px 30px rgba(28, 27, 24, .22);
+  opacity: 0; transform: translate(-50%, -50%) scale(.7) rotate(-4deg); transition: opacity .25s, transform .35s var(--cd-spring); }
+.cd-peek.on { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-2deg); }
+
+/* 光标圈 */
+.cd-cursor { position: fixed; left: 0; top: 0; z-index: 70; width: 26px; height: 26px; margin: -13px 0 0 -13px; border: 1.5px solid var(--cd-ink); border-radius: 50%; pointer-events: none; opacity: 0; transition: width .25s var(--cd-spring), height .25s var(--cd-spring), margin .25s var(--cd-spring), background .2s, opacity .3s; mix-blend-mode: multiply; }
+.cd-cursor.on { opacity: .7; }
+.cd-cursor.big { width: 54px; height: 54px; margin: -27px 0 0 -27px; background: rgba(214, 63, 38, .14); border-color: var(--cd-red); }
+
+/* 出现 */
+.cd-js [data-reveal] { opacity: 0; transform: translateY(16px); transition: opacity .7s var(--cd-ease), transform .7s var(--cd-ease); transition-delay: var(--rd, 0s); }
+.cd-js [data-reveal].in { opacity: 1; transform: none; }
+
+/* 子站返回条：Lab 里的每个作品都带一个 */
+.cd-back { position: fixed; left: 14px; top: 14px; z-index: 80; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; border-radius: 999px; font: 600 13px var(--cd-body); color: var(--cd-ink); background: color-mix(in srgb, var(--cd-paper) 86%, transparent); box-shadow: 0 0 0 1.5px var(--cd-ink); backdrop-filter: blur(8px); transition: background .25s, color .25s, transform .25s var(--cd-spring); }
+.cd-back:hover { background: var(--cd-ink); color: var(--cd-paper); transform: translateX(-3px); }
+.cd-back i { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--cd-red); color: var(--cd-paper); font: 700 11px var(--cd-display); font-style: normal; }
+
+.cd-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 24px var(--cd-gutter) 32px; font: 12px var(--cd-mono); color: var(--cd-mute); }
+
+@media (max-width: 720px) {
+  .cd-row { grid-template-columns: 26px minmax(0, 1fr) auto; }
+  .cd-note { grid-column: 2; grid-row: 2; }
+  .cd-peek, .cd-cursor { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .cd *, .cd *::before, .cd *::after { animation: none !important; transition-duration: .01ms !important; }
+  .cd-js [data-reveal] { opacity: 1; transform: none; }
+}

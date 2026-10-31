@@ -3,97 +3,77 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>代码侦探 · 用 AI 做作品，讲开源项目</title>
-  <meta name="description" content="代码侦探：用 AI 做作品，把值得用的开源项目讲给创作者。看视频、找开源项目、下载资源，也欢迎来聊聊。">
+  <title>代码侦探</title>
+  <meta name="description" content="代码侦探：用 AI 做作品，讲开源项目。">
   <meta name="theme-color" content="#efe9dc">
   <link rel="canonical" href="https://me.ailike.fun/">
-  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/cd/img/favicon.svg" type="image/svg+xml">
   <meta property="og:title" content="代码侦探">
-  <meta property="og:description" content="用 AI 做作品，把值得用的开源项目讲给创作者。">
-  <meta property="og:image" content="https://me.ailike.fun/img/doutan-0.png">
-  <meta property="og:type" content="website">
-  <link rel="preload" href="/fonts/DouyinSansBold.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/style.css?v=1">
+  <meta property="og:description" content="用 AI 做作品，讲开源项目。">
+  <meta property="og:image" content="https://me.ailike.fun/cd/img/doutan-0.png">
+  <link rel="preload" href="/cd/fonts/DouyinSansBold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/cd/cd.css?v=1">
+  <link rel="stylesheet" href="/home.css?v=2">
 </head>
-<body>
-  <a class="skip" href="#oss">跳到开源项目</a>
-
-  <header class="top">
-    <a class="brand" href="#top" aria-label="代码侦探 首页">
-      <span class="seal" aria-hidden="true">探</span><span class="brand-name">代码侦探</span>
-    </a>
-    <nav class="nav" aria-label="页面导航">
-      <a href="#videos">视频</a><a href="#oss">开源</a><a href="#works">作品</a><a href="#contact">联系</a>
-    </nav>
+<body class="cd">
+  <header class="cd-bar">
+    <a class="cd-brand" href="#top" aria-label="代码侦探"><b>代码侦探</b></a>
+    <nav class="cd-nav" aria-label="页面导航"><a href="#videos" data-roll>视频</a><a href="#oss" data-roll>开源</a><a href="#works" data-roll>作品</a><a href="#contact" data-roll>联系</a></nav>
   </header>
 
-  <main id="top">
+  <main class="cd-wrap" id="top">
     <section class="hero">
-            <h1 class="hero-title">代码侦<mark>探</mark></h1>
-      <div class="hero-row">
-        <p class="hero-lede">用 AI 做作品，讲开源项目。</p>
-        <ul class="hero-links" aria-label="社交媒体">
-          <li><a class="pill" href="https://www.douyin.com/user/MS4wLjABAAAArWDxkCgxKLOPmi8kLilz-FXmDDy6KRQjK_DmpEfVcNB9J-UTGg9OnI2EzuH3CL-2" target="_blank" rel="noreferrer" data-social="douyin">抖音 <i>↗</i></a></li>
-          <li><a class="pill" href="https://www.xiaohongshu.com/user/profile/6890d3e9000000002802480d" target="_blank" rel="noreferrer" data-social="xhs">小红书 <i>↗</i></a></li>
-          <li><a class="pill pill-red" href="#contact">加微信 <i>→</i></a></li>
-        </ul>
+      <h1 class="cd-title">代码侦<mark>探</mark></h1>
+      <p class="cd-sub hero-sub">用 AI 做作品，讲开源项目。<span class="caret" aria-hidden="true"></span></p>
+      <div class="hero-links">
+        <a class="cd-pill" data-magnet href="https://www.douyin.com/user/MS4wLjABAAAArWDxkCgxKLOPmi8kLilz-FXmDDy6KRQjK_DmpEfVcNB9J-UTGg9OnI2EzuH3CL-2" target="_blank" rel="noreferrer" data-social="douyin">抖音 ↗</a>
+        <a class="cd-pill" data-magnet href="https://www.xiaohongshu.com/user/profile/6890d3e9000000002802480d" target="_blank" rel="noreferrer" data-social="xhs">小红书 ↗</a>
+        <a class="cd-pill red" data-magnet href="#contact">加微信 →</a>
       </div>
       <button class="mascot" id="mascot" type="button" aria-label="豆探，点一下换个动作">
-        <img src="/img/doutan-0.png" alt="" width="720" height="600" data-poses="/img/doutan-0.png,/img/doutan-2.png,/img/doutan-3.png">
+        <img src="/cd/img/doutan-0.png" alt="" width="720" height="600" data-poses="/cd/img/doutan-0.png,/cd/img/doutan-2.png,/cd/img/doutan-3.png">
       </button>
     </section>
 
     <section class="block" id="videos" aria-labelledby="h-videos">
-      <header class="block-head">
-        <h2 id="h-videos">视频</h2>
-      </header>
+      <h2 class="cd-h" id="h-videos">视频<i></i><small id="n-videos"></small></h2>
       <div class="videos" id="video-list"></div>
     </section>
 
     <section class="block" id="oss" aria-labelledby="h-oss">
-      <header class="block-head">
-        <h2 id="h-oss">开源项目</h2>
-      </header>
+      <h2 class="cd-h" id="h-oss">开源项目<i></i><small id="n-oss"></small></h2>
       <div class="tools">
         <div class="chips" id="chips" role="group" aria-label="按类型筛选"></div>
-        <label class="search"><span class="sr">搜索项目</span><input id="q" type="search" placeholder="搜索项目" autocomplete="off"></label>
+        <label class="search"><span class="cd-sr">搜索项目</span><input id="q" type="search" placeholder="搜索" autocomplete="off"></label>
       </div>
-      <ol class="rows" id="oss-list"></ol>
+      <ul class="cd-rows" id="oss-list"></ul>
       <button class="more" id="more" type="button" hidden></button>
     </section>
 
     <section class="block" id="works" aria-labelledby="h-works">
-      <header class="block-head">
-        <h2 id="h-works">作品</h2>
-      </header>
-      <div class="works" id="work-list"></div>
+      <h2 class="cd-h" id="h-works">作品<i></i><small id="n-works"></small></h2>
+      <ul class="cd-rows" id="work-list"></ul>
       <p class="archive" id="archive" hidden></p>
+    </section>
+
+    <section class="block" id="contact" aria-labelledby="h-contact">
+      <h2 class="cd-h" id="h-contact">联系<i></i></h2>
+      <div class="contact">
+        <ul class="cd-rows">
+          <li><button class="cd-row" id="copy" type="button" aria-label="复制微信号 b1uesweater">
+            <span class="cd-no">01</span><span class="cd-name" data-roll>微信</span><span class="cd-note mono" id="wxid">b1uesweater</span><span class="cd-arrow" id="copy-hint">复制</span></button></li>
+          <li><a class="cd-row" href="https://www.douyin.com/user/MS4wLjABAAAArWDxkCgxKLOPmi8kLilz-FXmDDy6KRQjK_DmpEfVcNB9J-UTGg9OnI2EzuH3CL-2" target="_blank" rel="noreferrer" data-social="douyin">
+            <span class="cd-no">02</span><span class="cd-name" data-roll>抖音</span><span class="cd-note">代码侦探</span><span class="cd-arrow">↗</span></a></li>
+          <li><a class="cd-row" href="https://www.xiaohongshu.com/user/profile/6890d3e9000000002802480d" target="_blank" rel="noreferrer" data-social="xhs">
+            <span class="cd-no">03</span><span class="cd-name" data-roll>小红书</span><span class="cd-note">代码侦探</span><span class="cd-arrow">↗</span></a></li>
+        </ul>
+        <figure class="qr"><img src="/img/wechat-qr.png" alt="微信二维码 b1uesweater" width="540" height="540" loading="lazy"></figure>
+      </div>
     </section>
   </main>
 
-  <section class="contact" id="contact" aria-labelledby="h-contact">
-    <div class="contact-in">
-      <div class="contact-copy">
-        <h2 id="h-contact">联系</h2>
-        <div class="wx">
-          <span class="mono wx-label">微信</span>
-          <code id="wxid">b1uesweater</code>
-          <button class="copy" id="copy" type="button">复制</button>
-        </div>
-        <ul class="hero-links contact-links">
-          <li><a class="pill pill-light" href="https://www.douyin.com/user/MS4wLjABAAAArWDxkCgxKLOPmi8kLilz-FXmDDy6KRQjK_DmpEfVcNB9J-UTGg9OnI2EzuH3CL-2" target="_blank" rel="noreferrer" data-social="douyin">抖音 <i>↗</i></a></li>
-          <li><a class="pill pill-light" href="https://www.xiaohongshu.com/user/profile/6890d3e9000000002802480d" target="_blank" rel="noreferrer" data-social="xhs">小红书 <i>↗</i></a></li>
-        </ul>
-      </div>
-      <figure class="qr">
-        <img src="/img/wechat-qr.png" alt="代码侦探的微信二维码，微信号 b1uesweater" width="540" height="540" loading="lazy">
-        
-        <img class="qr-mascot" src="/img/doutan-2.png" alt="" width="240" height="200" loading="lazy">
-      </figure>
-    </div>
-    <footer class="foot mono"><span>© 2026 代码侦探</span></footer>
-  </section>
-
-  <script src="/app.js?v=1" defer></script>
+  <footer class="cd-foot"><span>© 2026 代码侦探</span></footer>
+  <script src="/cd/cd.js?v=1"></script>
+  <script src="/app.js?v=2" defer></script>
 </body>
 </html>
