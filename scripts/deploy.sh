@@ -14,7 +14,9 @@ echo "2/4 上传新版本（不含 data 和备份）"
 # DEPLOY_EXCLUDE：空格分隔的路径，跳过还没准备好上线的文件，例如 DEPLOY_EXCLUDE="public/tools/draft.html"
 EXCLUDES=""; for x in ${DEPLOY_EXCLUDE:-}; do EXCLUDES="$EXCLUDES --exclude=$x"; done
 # shellcheck disable=SC2086
-COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs $EXCLUDES -cf - Dockerfile compose.yaml .dockerignore server public seed-covers \
+# 三国舆图：源码在 sites/sanguo，只把运行所需文件打进 public/sanguo（不含 build、docs、node_modules）
+SANGUO="sites/sanguo/index.html sites/sanguo/css sites/sanguo/js sites/sanguo/data sites/sanguo/img sites/sanguo/fonts sites/sanguo/vendor"
+COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs $EXCLUDES -s ',^sites/sanguo/,public/sanguo/,' -cf - Dockerfile compose.yaml .dockerignore server public seed-covers $SANGUO \
   | sh "$SSH" "cd $REMOTE && mkdir -p data && rm -rf server public seed-covers && tar xf - && find . -name '._*' -not -path './backups/*' -delete"
 
 echo "3/4 首次部署时写入后台密码（密码文件只在本机和服务器 .env 里）"

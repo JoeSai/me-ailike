@@ -209,7 +209,7 @@ const server = http.createServer(async (req, res) => {
 
     // 静态文件
     if (m !== 'GET' && m !== 'HEAD') return send(res, 405, 'Method not allowed');
-    if (p === '/tools') { res.writeHead(301, { ...SEC, Location: '/tools/' }); return res.end(); }
+    if (p === '/tools' || p === '/sanguo') { res.writeHead(301, { ...SEC, Location: p + '/' }); return res.end(); }
     let rel = p.endsWith('/') ? p + 'index.html' : p;
     const file = normalize(join(PUBLIC, decodeURIComponent(rel)));
     if (!file.startsWith(PUBLIC + sep) || file.startsWith(join(PUBLIC, 'admin') + sep)) return send(res, 404, 'Not found');
