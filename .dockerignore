@@ -4,3 +4,4 @@ assets-src
 .git
 .admin-password
 .env
+private

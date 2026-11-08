@@ -1,10 +1,17 @@
 #!/bin/sh
-# 部署到 me.ailike.fun。只动 /path/to/site，不碰 服务器上的其他服务。
-# 用法：sh scripts/deploy.sh          （需要本机 ssh 包装脚本，路径见 SSH）
+# 部署到 me.ailike.fun。只动服务器上的主页目录，不碰服务器上的其他服务。
+# 用法：sh scripts/deploy.sh
+# 本机配置写在 scripts/.deploy.local（不入库），例如：SSH=/path/to/ssh-wrapper
+# 私有内容（private/，独立仓库 私有仓库）里的工具和三国舆图会一并打包上线。
 set -eu
-SSH="${SSH:?先在 scripts/.deploy.local 或环境变量里设置 SSH}"
-REMOTE=/path/to/site
 cd "$(dirname "$0")/.."
+[ -f scripts/.deploy.local ] && . scripts/.deploy.local
+SSH="${SSH:?先在 scripts/.deploy.local 或环境变量里设置 SSH}"
+REMOTE="${REMOTE:-/path/to/site}"
+# 服务器上会先删掉 public 再解包，缺了 private 会让线上工具和舆图消失，所以默认拒绝
+if [ ! -d private/tools ] || [ ! -d private/sites/sanguo ]; then
+  [ "${ALLOW_NO_PRIVATE:-0}" = 1 ] || { echo "缺少 private/（git clone 私有仓库 private）。确需只发主页，设 ALLOW_NO_PRIVATE=1"; exit 1; }
+fi
 STAMP=$(date +%Y%m%d-%H%M%S)
 
 echo "1/4 备份服务器上的现有版本"
@@ -14,9 +21,12 @@ echo "2/4 上传新版本（不含 data 和备份）"
 # DEPLOY_EXCLUDE：空格分隔的路径，跳过还没准备好上线的文件，例如 DEPLOY_EXCLUDE="public/tools/draft.html"
 EXCLUDES=""; for x in ${DEPLOY_EXCLUDE:-}; do EXCLUDES="$EXCLUDES --exclude=$x"; done
 # shellcheck disable=SC2086
-# 三国舆图：源码在 sites/sanguo，只把运行所需文件打进 public/sanguo（不含 build、docs、node_modules）
-SANGUO="sites/sanguo/index.html sites/sanguo/css sites/sanguo/js sites/sanguo/data sites/sanguo/img sites/sanguo/fonts sites/sanguo/vendor"
-COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs $EXCLUDES -s ',^sites/sanguo/,public/sanguo/,' -cf - Dockerfile compose.yaml .dockerignore server public seed-covers $SANGUO \
+# 私有部分映射进 public：private/tools/* → public/tools/*；三国舆图只带运行所需文件 → public/sanguo/
+PRIV=""
+[ -d private/tools ] && PRIV="private/tools"
+[ -d private/sites/sanguo ] && for x in index.html css js data img fonts vendor; do PRIV="$PRIV private/sites/sanguo/$x"; done
+COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs $EXCLUDES -s ',^private/tools,public/tools,' -s ',^private/sites/sanguo/,public/sanguo/,' \
+  -cf - Dockerfile compose.yaml .dockerignore server public seed-covers $PRIV \
   | sh "$SSH" "cd $REMOTE && mkdir -p data && rm -rf server public seed-covers && tar xf - && find . -name '._*' -not -path './backups/*' -delete"
 
 echo "3/4 首次部署时写入后台密码（密码文件只在本机和服务器 .env 里）"

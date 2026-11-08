@@ -4,3 +4,7 @@ node_modules/
 _backup/
 assets-src/
 __pycache__/
+private/
+.claude/
+scripts/.deploy.local
+.DS_Store
