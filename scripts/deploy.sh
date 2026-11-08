@@ -1,16 +1,16 @@
 #!/bin/sh
 # 部署到 me.ailike.fun。只动服务器上的主页目录，不碰服务器上的其他服务。
 # 用法：sh scripts/deploy.sh
-# 本机配置写在 scripts/.deploy.local（不入库），例如：SSH=/path/to/ssh-wrapper
-# 私有内容（private/，独立仓库 私有仓库）里的工具和三国舆图会一并打包上线。
+# 本机配置写在 scripts/.deploy.local（不入库）：SSH、REMOTE
+# private/ 里的工具和作品会一并打包上线。
 set -eu
 cd "$(dirname "$0")/.."
 [ -f scripts/.deploy.local ] && . scripts/.deploy.local
 SSH="${SSH:?先在 scripts/.deploy.local 或环境变量里设置 SSH}"
-REMOTE="${REMOTE:-/path/to/site}"
+REMOTE="${REMOTE:?先在 scripts/.deploy.local 或环境变量里设置 REMOTE}"
 # 服务器上会先删掉 public 再解包，缺了 private 会让线上工具和舆图消失，所以默认拒绝
 if [ ! -d private/tools ] || [ ! -d private/sites/sanguo ]; then
-  [ "${ALLOW_NO_PRIVATE:-0}" = 1 ] || { echo "缺少 private/（git clone 私有仓库 private）。确需只发主页，设 ALLOW_NO_PRIVATE=1"; exit 1; }
+  [ "${ALLOW_NO_PRIVATE:-0}" = 1 ] || { echo "缺少 private/。确需只发主页，设 ALLOW_NO_PRIVATE=1"; exit 1; }
 fi
 STAMP=$(date +%Y%m%d-%H%M%S)
 
