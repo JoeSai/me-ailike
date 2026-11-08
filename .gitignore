@@ -3,3 +3,4 @@ node_modules/
 .admin-password
 _backup/
 assets-src/
+__pycache__/

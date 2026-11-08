@@ -72,3 +72,7 @@ button.cd-row { width: 100%; text-align: left; background: none; border-top: 0; 
   .vcard { flex-basis: 62%; }
   .mascot { width: 84px; top: 24px; }
 }
+
+/* 在线工具 */
+.tools-all { margin: 16px 0 0; text-align: right; font: 600 14px var(--cd-body); }
+.tools-all a { border-bottom: 1.5px solid currentColor; }

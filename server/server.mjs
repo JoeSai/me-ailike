@@ -5,6 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual, randomUUID } from 'node:crypto';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as dl from './dl.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const PUBLIC = join(ROOT, 'public');
@@ -91,7 +92,7 @@ const isBot = req => /bot|spider|crawl|curl|python|headless/i.test(req.headers['
 // ---- 工具 ----
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml' };
+  '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml', '.mp4': 'video/mp4', '.webm': 'video/webm', '.m4a': 'audio/mp4', '.mp3': 'audio/mpeg' };
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
 const SEC = { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'DENY' };
 function send(res, code, body, headers = {}) {
@@ -165,6 +166,23 @@ const server = http.createServer(async (req, res) => {
       if (m === 'GET' && !isBot(req)) { db.prepare('UPDATE files SET downloads=downloads+1 WHERE id=?').run(f.id); track('dl'); }
       return serveFile(req, res, join(UPLOADS, f.stored), { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(f.name)}`, 'Cache-Control': 'no-store' });
     }
+    // 视频下载工具
+    if (p === '/api/dl' && m === 'POST') {
+      const b = await readJson(req, 4096).catch(() => ({}));
+      const r = dl.submit(b.url, ipOf(req));
+      if (r.error) return send(res, r.code, { error: r.error });
+      if (!isBot(req)) track('tool:dl');
+      return send(res, 200, r);
+    }
+    if ((mm = p.match(/^\/api\/dl\/([0-9a-f-]{36})$/)) && m === 'GET') {
+      const st = dl.status(mm[1]);
+      return st ? send(res, 200, st, { 'Cache-Control': 'no-store' }) : send(res, 404, { error: '任务不存在或已过期' });
+    }
+    if ((mm = p.match(/^\/dl\/([0-9a-f-]{36})$/)) && (m === 'GET' || m === 'HEAD')) {
+      const f = dl.fileOf(mm[1]);
+      if (!f) return serveFile(req, res, join(PUBLIC, '404.html'), {});
+      return serveFile(req, res, f.path, { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(f.name)}`, 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
+    }
     // 封面等上传图片
     if ((mm = p.match(/^\/u\/([\w.\-]+)$/)) && (m === 'GET' || m === 'HEAD')) {
       if (!IMAGE_EXT.has(extname(mm[1]).toLowerCase())) return send(res, 404, 'Not found');
@@ -191,7 +209,8 @@ const server = http.createServer(async (req, res) => {
 
     // 静态文件
     if (m !== 'GET' && m !== 'HEAD') return send(res, 405, 'Method not allowed');
-    let rel = p === '/' ? '/index.html' : p;
+    if (p === '/tools') { res.writeHead(301, { ...SEC, Location: '/tools/' }); return res.end(); }
+    let rel = p.endsWith('/') ? p + 'index.html' : p;
     const file = normalize(join(PUBLIC, decodeURIComponent(rel)));
     if (!file.startsWith(PUBLIC + sep) || file.startsWith(join(PUBLIC, 'admin') + sep)) return send(res, 404, 'Not found');
     if (!existsSync(file)) {

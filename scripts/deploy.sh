@@ -11,7 +11,10 @@ echo "1/4 备份服务器上的现有版本"
 sh "$SSH" "cd $REMOTE && mkdir -p backups && tar --exclude=backups --exclude='._*' --exclude=data -czf backups/before-$STAMP.tgz . && ls -la backups | tail -3"
 
 echo "2/4 上传新版本（不含 data 和备份）"
-COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs -cf - Dockerfile compose.yaml .dockerignore server public seed-covers \
+# DEPLOY_EXCLUDE：空格分隔的路径，跳过还没准备好上线的文件，例如 DEPLOY_EXCLUDE="public/tools/draft.html"
+EXCLUDES=""; for x in ${DEPLOY_EXCLUDE:-}; do EXCLUDES="$EXCLUDES --exclude=$x"; done
+# shellcheck disable=SC2086
+COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs $EXCLUDES -cf - Dockerfile compose.yaml .dockerignore server public seed-covers \
   | sh "$SSH" "cd $REMOTE && mkdir -p data && rm -rf server public seed-covers && tar xf - && find . -name '._*' -not -path './backups/*' -delete"
 
 echo "3/4 首次部署时写入后台密码（密码文件只在本机和服务器 .env 里）"
