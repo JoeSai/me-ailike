@@ -1,6 +1,6 @@
 // 在线工具清单：首页“工具”区和 /tools/ 共用。加工具只改这里。
 window.CD_TOOLS = [
-  { href: '/sanguo/', name: '三国舆图', note: '拖动年轴看 184—280 年疆域变迁，纪事、人物、战役推演与专题导览', img: '/tools/img/sanguo.webp', tag: '新' },
+  { href: '/sanguo/', name: '三国舆图', note: '拖动年轴看 184—280 年疆域变迁，纪事、人物、战役推演与专题导览', img: '/tools/img/sanguo.webp?v=2', tag: '新' },
   // 视频下载（/tools/video-download.html）暂不挂出：服务器是海外机房 IP，抖音、B 站、YouTube 都被拦，只测通了 TikTok
   { href: '/tools/pixel-art-lighter.html', name: '像素艺术打火机', note: '给像素画生成法线贴图，拖着光源实时打光（Pixel Art Lighter 汉化版）', img: '/tools/img/pixel-art-lighter.png', pixel: true },
 ];
