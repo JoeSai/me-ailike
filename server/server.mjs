@@ -11,6 +11,7 @@ const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const PUBLIC = join(ROOT, 'public');
 const DATA = resolve(process.env.DATA_DIR || join(ROOT, 'data'));
 const PORT = +(process.env.PORT || 8080);
+const DL_ON = process.env.DL_ENABLED === '1';
 const MAX_FILE = 100 * 1024 * 1024;       // 单个附件 100 MB
 const MAX_TOTAL = 3 * 1024 * 1024 * 1024; // 附件总量 3 GB，防止占满服务器磁盘
 const UPLOADS = join(DATA, 'uploads');
@@ -76,6 +77,8 @@ const isAdmin = req => validSession(cookieOf(req).sid);
 
 // 登录限速：同一 IP 每 15 分钟最多 8 次失败
 const fails = new Map();
+// 全站失败上限：源站 IP 一旦被绕过 Cloudflare 直连，cf-connecting-ip 可以伪造，按 IP 限速就失效，所以再加一道总量限制
+const allFails = { n: 0, t: Date.now() };
 function ipOf(req) { return (req.headers['cf-connecting-ip'] || (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '').toString(); }
 
 // ---- 统计 ----
@@ -87,6 +90,24 @@ function trackVisitor(req) {
   const r = db.prepare('INSERT OR IGNORE INTO visitors(day,h) VALUES(?,?)').run(day, h);
   if (r.changes) track('uv');
 }
+// 防抓取：在线工具和三国舆图（/tools/、/sanguo/）只给真人浏览器用。
+// 1) 抓取工具（curl、wget、Python、爬虫框架、无头浏览器、AI 爬虫）一律拒绝，页面也不给；正规搜索引擎可以读页面，不能取脚本和数据；
+// 2) 页面以外的文件（脚本、数据、图片、字体）要带 Sec-Fetch-Site: same-origin 或本站 Referer，直接打开文件地址、别的网站盗链都拿不到；
+// 3) 这些响应标 private，Cloudflare 边缘不缓存，每次都要过这道检查。
+// 首页用的工具清单（tools.js、tools.css、封面图）不在保护范围。挡不住有人用真浏览器另存，但能挡住批量抓取和直接下载源码、数据。
+const SCRAPER = /curl|wget|python|aiohttp|httpx|scrapy|httrack|go-http|java\/|okhttp|node-fetch|axios|undici|libwww|perl|ruby|php|headless|phantom|puppeteer|playwright|selenium|crawl|spider|scrap|bot\b|ccbot|bytespider/i;   // 别写 app 名：Claude、飞书等桌面应用的内置浏览器 UA 里带自己的名字
+const SEARCH = /googlebot|bingbot|baiduspider|sogou|360spider|yisouspider|duckduckbot|applebot\//i;
+const PUBLIC_LIST = p => p === '/tools/' || p === '/tools/index.html' || p === '/tools/tools.js' || p === '/tools/tools.css' || p.startsWith('/tools/img/');
+const GUARDED = p => /^\/(sanguo|tools)\//.test(p) && !PUBLIC_LIST(p);
+const isPage = p => p.endsWith('/') || /\.html?$/.test(p);
+function guardOk(req, p) {
+  const ua = req.headers['user-agent'] || '';
+  if (isPage(p)) return !!ua && (!SCRAPER.test(ua) || SEARCH.test(ua));
+  if (!ua || SCRAPER.test(ua)) return false;
+  const site = req.headers['sec-fetch-site'];
+  if (site) return site === 'same-origin';
+  try { return new URL(req.headers.referer || '').host === req.headers.host; } catch { return false; }
+}
 const isBot = req => /bot|spider|crawl|curl|python|headless/i.test(req.headers['user-agent'] || '');
 
 // ---- 工具 ----
@@ -94,7 +115,8 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=u
   '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml', '.mp4': 'video/mp4', '.webm': 'video/webm', '.m4a': 'audio/mp4', '.mp3': 'audio/mpeg' };
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
-const SEC = { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'DENY' };
+const SEC = { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'DENY',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()', 'Cross-Origin-Opener-Policy': 'same-origin' };
 function send(res, code, body, headers = {}) {
   const isObj = body !== null && typeof body === 'object' && !Buffer.isBuffer(body);
   res.writeHead(code, { ...SEC, 'Content-Type': isObj ? MIME['.json'] : 'text/plain; charset=utf-8', ...headers });
@@ -108,15 +130,16 @@ function readJson(req, limit = 256 * 1024) {
     req.on('error', no);
   });
 }
-function serveFile(req, res, file, headers = {}) {
+function serveFile(req, res, file, headers = {}, status = 200) {
   let st; try { st = statSync(file); } catch { return send(res, 404, 'Not found'); }
   if (!st.isFile()) return send(res, 404, 'Not found');
   const etag = `"${st.size}-${Math.floor(st.mtimeMs)}"`;
-  if (req.headers['if-none-match'] === etag) { res.writeHead(304, { ETag: etag }); return res.end(); }
-  res.writeHead(200, { ...SEC, 'Content-Type': MIME[extname(file).toLowerCase()] || 'application/octet-stream', 'Content-Length': st.size, ETag: etag, ...headers });
+  if (status === 200 && req.headers['if-none-match'] === etag) { res.writeHead(304, { ETag: etag }); return res.end(); }
+  res.writeHead(status, { ...SEC, 'Content-Type': MIME[extname(file).toLowerCase()] || 'application/octet-stream', 'Content-Length': st.size, ETag: etag, ...headers });
   if (req.method === 'HEAD') return res.end();
   createReadStream(file).pipe(res);
 }
+const notFound = (req, res) => serveFile(req, res, join(PUBLIC, '404.html'), { 'Cache-Control': 'no-store' }, 404);
 const clean = (v, max = 500) => String(v ?? '').trim().slice(0, max);
 const cleanUrl = v => { v = clean(v, 1000); return v === '' || /^https?:\/\//i.test(v) ? v : ''; };
 
@@ -146,7 +169,7 @@ const server = http.createServer(async (req, res) => {
 
     // 公开内容
     if (p === '/api/content' && m === 'GET') {
-      const items = itemsWithFiles('WHERE hidden=0');
+      const items = itemsWithFiles("WHERE hidden=0 AND kind!='archive'");   // 旧作不再公开（2026-11-10）
       return send(res, 200, { items }, { 'Cache-Control': 'no-cache' });
     }
     // 事件：view 或 go:<id>
@@ -166,7 +189,8 @@ const server = http.createServer(async (req, res) => {
       if (m === 'GET' && !isBot(req)) { db.prepare('UPDATE files SET downloads=downloads+1 WHERE id=?').run(f.id); track('dl'); }
       return serveFile(req, res, join(UPLOADS, f.stored), { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(f.name)}`, 'Cache-Control': 'no-store' });
     }
-    // 视频下载工具
+    // 视频下载工具：未上线，默认关闭（服务器会替访客去抓任意网址，开放前要先做 SSRF 防护），DL_ENABLED=1 才开
+    if (!DL_ON && (p.startsWith('/api/dl') || p.startsWith('/dl/') || p === '/tools/video-download.html')) return notFound(req, res);
     if (p === '/api/dl' && m === 'POST') {
       const b = await readJson(req, 4096).catch(() => ({}));
       const r = dl.submit(b.url, ipOf(req));
@@ -180,7 +204,7 @@ const server = http.createServer(async (req, res) => {
     }
     if ((mm = p.match(/^\/dl\/([0-9a-f-]{36})$/)) && (m === 'GET' || m === 'HEAD')) {
       const f = dl.fileOf(mm[1]);
-      if (!f) return serveFile(req, res, join(PUBLIC, '404.html'), {});
+      if (!f) return notFound(req, res);
       return serveFile(req, res, f.path, { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(f.name)}`, 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
     }
     // 封面等上传图片
@@ -194,10 +218,11 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/admin/login' && m === 'POST') {
       const ip = ipOf(req), rec = fails.get(ip) || { n: 0, t: Date.now() };
       if (Date.now() - rec.t > 15 * 60e3) { rec.n = 0; rec.t = Date.now(); }
-      if (rec.n >= 8) return send(res, 429, { error: '尝试次数过多，请 15 分钟后再试' });
+      if (Date.now() - allFails.t > 15 * 60e3) { allFails.n = 0; allFails.t = Date.now(); }
+      if (rec.n >= 8 || allFails.n >= 40) return send(res, 429, { error: '尝试次数过多，请 15 分钟后再试' });
       const b = await readJson(req, 2048).catch(() => ({}));
       const given = Buffer.from(hashPw(String(b.password || ''), auth.salt)), real = Buffer.from(auth.hash);
-      if (given.length !== real.length || !timingSafeEqual(given, real)) { rec.n++; fails.set(ip, rec); return send(res, 401, { error: '密码不对' }); }
+      if (given.length !== real.length || !timingSafeEqual(given, real)) { rec.n++; allFails.n++; fails.set(ip, rec); return send(res, 401, { error: '密码不对' }); }
       fails.delete(ip);
       return send(res, 200, { ok: true }, { 'Set-Cookie': `sid=${encodeURIComponent(makeSession())}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_DAYS * 86400}` });
     }
@@ -210,16 +235,18 @@ const server = http.createServer(async (req, res) => {
     // 静态文件
     if (m !== 'GET' && m !== 'HEAD') return send(res, 405, 'Method not allowed');
     if (p === '/tools' || p === '/sanguo') { res.writeHead(301, { ...SEC, Location: p + '/' }); return res.end(); }
+    if (GUARDED(p) && !guardOk(req, p)) return send(res, 403, 'Forbidden', { 'Cache-Control': 'no-store' });
     let rel = p.endsWith('/') ? p + 'index.html' : p;
     const file = normalize(join(PUBLIC, decodeURIComponent(rel)));
     if (!file.startsWith(PUBLIC + sep) || file.startsWith(join(PUBLIC, 'admin') + sep)) return send(res, 404, 'Not found');
     if (!existsSync(file)) {
       if (extname(rel)) return send(res, 404, 'Not found');
-      return serveFile(req, res, join(PUBLIC, '404.html'), {});
+      return notFound(req, res);
     }
     const ext = extname(file).toLowerCase();
-    const cache = ext === '.html' ? 'no-cache' : ['.woff2', '.png', '.jpg', '.webp', '.svg'].includes(ext) ? 'public, max-age=604800' : 'no-cache';
-    return serveFile(req, res, file, { 'Cache-Control': cache });
+    const media = ['.woff2', '.png', '.jpg', '.webp', '.svg'].includes(ext);
+    const cache = GUARDED(p) ? (media ? 'private, max-age=604800' : 'private, no-cache') : ext === '.html' ? 'no-cache' : media ? 'public, max-age=604800' : 'no-cache';
+    return serveFile(req, res, file, { 'Cache-Control': cache, ...(GUARDED(p) ? { Vary: 'User-Agent, Referer, Sec-Fetch-Site', ...(isPage(p) ? {} : { 'X-Robots-Tag': 'noindex' }) } : {}) });
   } catch (e) {
     console.error(e);
     if (!res.headersSent) send(res, 500, { error: '服务器出错' });

@@ -21,12 +21,11 @@ echo "2/4 上传新版本（不含 data 和备份）"
 # DEPLOY_EXCLUDE：空格分隔的路径，跳过还没准备好上线的文件，例如 DEPLOY_EXCLUDE="public/tools/draft.html"
 EXCLUDES=""; for x in ${DEPLOY_EXCLUDE:-}; do EXCLUDES="$EXCLUDES --exclude=$x"; done
 # shellcheck disable=SC2086
-# 私有部分映射进 public：private/tools/* → public/tools/*；三国舆图只带运行所需文件 → public/sanguo/
-PRIV=""
-[ -d private/tools ] && PRIV="private/tools"
-[ -d private/sites/sanguo ] && for x in index.html css js data img fonts vendor; do PRIV="$PRIV private/sites/sanguo/$x"; done
-COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs $EXCLUDES -s ',^private/tools,public/tools,' -s ',^private/sites/sanguo/,public/sanguo/,' \
-  -cf - Dockerfile compose.yaml .dockerignore server public seed-covers $PRIV \
+# 私有部分先整理到临时目录（三国舆图的源码压缩打包，不上传原始源码），再映射进 public：tools → public/tools，sanguo → public/sanguo
+STAGE=$(mktemp -d); trap 'rm -rf "$STAGE"' EXIT
+sh scripts/build-private.sh "$STAGE/public" >/dev/null
+COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs $EXCLUDES \
+  -cf - Dockerfile compose.yaml .dockerignore server public seed-covers -C "$STAGE" public/tools public/sanguo \
   | sh "$SSH" "cd $REMOTE && mkdir -p data && rm -rf server public seed-covers && tar xf - && find . -name '._*' -not -path './backups/*' -delete"
 
 echo "3/4 首次部署时写入后台密码（密码文件只在本机和服务器 .env 里）"
