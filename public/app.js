@@ -62,18 +62,11 @@ function renderWorks(list) {
     </a></li>`).join('');
 }
 
-function renderArchive(list) {
-  const el = $('#archive');
-  if (!list.length) return;
-  el.hidden = false;
-  el.innerHTML = `<b>旧作</b>` + list.map(a => `<a href="${esc(a.url)}" target="_blank" rel="noreferrer" data-go="${a.id}:url">${esc(a.title)} ↗</a>`).join('');
-}
-
 fetch('/api/content').then(r => r.json()).then(({ items }) => {
   const by = k => items.filter(i => i.kind === k);
   const videos = by('video').filter(v => v.url);
   oss = by('oss');
-  renderVideos(videos); renderChips(); renderOss(); renderWorks(by('work')); renderArchive(by('archive'));
+  renderVideos(videos); renderChips(); renderOss(); renderWorks(by('work'));
   CD.init();
 }).catch(() => { $('#oss-list').innerHTML = '<li class="empty">加载失败，刷新试试。</li>'; });
 
@@ -94,14 +87,43 @@ $('#copy').addEventListener('click', async () => {
   beacon('copy:wechat'); hint.textContent = '已复制'; setTimeout(() => (hint.textContent = '复制'), 1600);
 });
 
-// 豆探：点一下换动作，鼠标移动时轻微跟随
-const mascot = $('#mascot'), img = mascot.querySelector('img'), poses = img.dataset.poses.split(',');
-let pose = 0;
-mascot.addEventListener('click', () => {
-  pose = (pose + 1) % poses.length; img.src = poses[pose];
-  mascot.classList.remove('bounce'); void mascot.offsetWidth; mascot.classList.add('bounce');
+// 豆探：待机时呼吸眨眼，点一下轮流做一个动作（精灵图逐帧播放）
+const SPRITE = { w: 407, h: 360, cols: 8, dir: '/img/doutan/', v: 1,
+  acts: { idle: { n: 20, fps: 7.5 }, jump: { n: 21, fps: 15 }, cool: { n: 29, fps: 15 }, wave: { n: 24, fps: 15 }, peek: { n: 32, fps: 15 } } };
+const mascot = $('#mascot'), sprite = mascot.querySelector('.mascot-sprite');
+const ORDER = ['jump', 'cool', 'wave', 'peek'], ready = {};
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let next = 0, cur = 'idle', t0 = performance.now();
+function load(name) {
+  return ready[name] ||= new Promise(ok => { const im = new Image(); im.onload = im.onerror = () => ok(); im.src = `${SPRITE.dir}doutan-${name}.webp?v=${SPRITE.v}`; });
+}
+function show(name, i) {
+  const a = SPRITE.acts[name], rows = Math.ceil(a.n / SPRITE.cols), cols = Math.min(a.n, SPRITE.cols);
+  const c = i % SPRITE.cols, r = Math.floor(i / SPRITE.cols);
+  sprite.style.backgroundImage = `url(${SPRITE.dir}doutan-${name}.webp?v=${SPRITE.v})`;
+  sprite.style.backgroundSize = `${cols * 100}% ${rows * 100}%`;
+  sprite.style.backgroundPosition = `${cols > 1 ? c / (cols - 1) * 100 : 0}% ${rows > 1 ? r / (rows - 1) * 100 : 0}%`;
+}
+function tick(now) {
+  const a = SPRITE.acts[cur], i = Math.floor((now - t0) / 1000 * a.fps);
+  if (cur !== 'idle' && i >= a.n) { cur = 'idle'; t0 = now; mascot.classList.remove('busy'); }
+  const A = SPRITE.acts[cur];
+  show(cur, cur === 'idle' ? (still ? 3 : Math.floor((now - t0) / 1000 * A.fps) % A.n) : Math.min(i, a.n - 1));
+  if (!still || cur !== 'idle') requestAnimationFrame(tick);
+}
+load('idle').then(() => { mascot.classList.add('on'); requestAnimationFrame(tick); });
+// 首屏加载完再悄悄预取动作图，点的时候不用等
+addEventListener('load', () => setTimeout(() => ORDER.forEach(load), 1200));
+mascot.addEventListener('click', async () => {
+  if (cur !== 'idle') return;
+  const name = ORDER[next]; next = (next + 1) % ORDER.length;
+  mascot.classList.add('busy');
+  await load(name);
+  cur = name; t0 = performance.now();
+  if (still) requestAnimationFrame(tick);
+  beacon('go:0:mascot');
 });
-if (matchMedia('(pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+if (matchMedia('(pointer: fine)').matches && !still) {
   addEventListener('pointermove', e => {
     mascot.style.setProperty('--px', `${(e.clientX / innerWidth - .5) * -14}px`);
     mascot.style.setProperty('--py', `${(e.clientY / innerHeight - .5) * -10}px`);

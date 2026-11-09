@@ -4,11 +4,10 @@
 .caret { display: inline-block; width: 2px; height: 1.05em; margin-left: 4px; vertical-align: -.15em; background: var(--cd-red); animation: blink 1.1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 .hero-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
-.mascot { position: absolute; right: 0; top: clamp(30px, 6vw, 80px); width: clamp(110px, 15vw, 190px); padding: 0; border: 0; background: none; transition: transform .35s var(--cd-spring); transform: translate(var(--px, 0), var(--py, 0)) rotate(var(--rot, 4deg)); }
-.mascot img { width: 100%; height: auto; animation: bob 4.2s ease-in-out infinite; }
-.mascot.bounce { animation: bounce .5s; }
-@keyframes bob { 50% { transform: translateY(-8px) rotate(-1.5deg); } }
-@keyframes bounce { 40% { transform: translate(var(--px, 0), calc(var(--py, 0px) - 18px)) rotate(-4deg) scale(1.04); } }
+.mascot { position: absolute; right: -12px; top: clamp(16px, 4vw, 56px); width: clamp(150px, 21vw, 270px); padding: 0; border: 0; background: none; cursor: pointer; transition: transform .35s var(--cd-spring); transform: translate(var(--px, 0), var(--py, 0)); -webkit-tap-highlight-color: transparent; }
+.mascot-sprite { display: block; aspect-ratio: 407 / 360; background: url(/img/doutan/doutan-still.webp) center / contain no-repeat; }
+.mascot:hover { transform: translate(var(--px, 0), calc(var(--py, 0px) - 4px)) rotate(-1.5deg); }
+.mascot:focus-visible { outline: 2px dashed var(--cd-red); outline-offset: 4px; border-radius: 8px; }
 
 .block { padding-bottom: clamp(48px, 7vw, 88px); }
 .cd-h { margin-bottom: 18px; }
@@ -44,10 +43,6 @@
 .more { display: block; width: 100%; margin-top: 18px; padding: 12px; border: 1.5px dashed var(--cd-ink); background: none; font-weight: 600; transition: background .2s, color .2s; }
 .more:hover { background: var(--cd-ink); color: var(--cd-paper); }
 .empty { padding: 28px 0; color: var(--cd-mute); }
-.archive { margin: 22px 0 0; font-size: 13px; color: var(--cd-mute); }
-.archive b { font: 12px var(--cd-mono); margin-right: 10px; color: var(--cd-ink); font-weight: 400; }
-.archive a { border-bottom: 1px solid var(--cd-line); margin-right: 14px; transition: color .2s, border-color .2s; }
-.archive a:hover { color: var(--cd-red); border-color: var(--cd-red); }
 
 /* 联系 */
 .contact { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(20px, 5vw, 64px); align-items: center; }
@@ -70,7 +65,7 @@ button.cd-row { width: 100%; text-align: left; background: none; border-top: 0; 
   .oss.cd-row .cd-note, .oss.cd-row .cd-tags { grid-column: 1; }
   .oss.cd-row .acts { grid-column: 1 / -1; justify-content: flex-start; }
   .vcard { flex-basis: 62%; }
-  .mascot { width: 84px; top: 24px; }
+  .mascot { width: 120px; top: 8px; right: -8px; }
 }
 
 /* 在线工具 */
