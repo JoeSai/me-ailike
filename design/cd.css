@@ -1,7 +1,8 @@
-/* 代码侦探 · 共享风格 v1
+/* 代码侦探 · 共享风格 v2（2026-11-10：直角、硬投影，标题字换得意黑）
    一份源文件，scripts/sync-design.sh 同步到各站的 cd/ 目录。改这里，各站一起变。
    用法见 design/README.md */
-@font-face { font-family: "CD Display"; src: url("./fonts/DouyinSansBold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+/* 得意黑 Smiley Sans（OFL），裁到常用 3900 字；只有一个字重，标题一律用 400，不让浏览器伪造粗体 */
+@font-face { font-family: "CD Display"; src: url("./fonts/SmileySans.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 
 :root {
   --cd-paper: #efe9dc;
@@ -14,6 +15,8 @@
   --cd-mint: #7cc4b0;
   --cd-display: "CD Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --cd-body: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --cd-hard: 4px 4px 0 var(--cd-ink);      /* 直角硬投影：和方块豆探的墨线一致 */
+  --cd-hard-hi: 6px 6px 0 var(--cd-red);
   --cd-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --cd-gutter: clamp(18px, 4vw, 48px);
   --cd-max: 1080px;
@@ -39,8 +42,8 @@ body.cd { margin: 0; color: var(--cd-ink); font: 15px/1.6 var(--cd-body); overfl
 .cd-bar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--cd-gutter);
   font: 13px var(--cd-mono); background: color-mix(in srgb, var(--cd-paper) 80%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 .cd-brand { display: inline-flex; align-items: center; gap: 8px; letter-spacing: .06em; }
-.cd-brand::before { content: ""; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--cd-red); animation: cd-pulse 2.4s ease-out infinite; }
-.cd-brand b { font: 700 15px var(--cd-display); letter-spacing: 0; }
+.cd-brand::before { content: ""; width: 9px; height: 9px; background: var(--cd-red); animation: cd-pulse 2.4s ease-out infinite; }
+.cd-brand b { font: 400 17px var(--cd-display); letter-spacing: .02em; }
 .cd-brand span { color: var(--cd-mute); }
 .cd-nav { display: flex; gap: clamp(14px, 3vw, 28px); }
 @keyframes cd-pulse { 0% { box-shadow: 0 0 0 0 rgba(214, 63, 38, .45); } 70%, 100% { box-shadow: 0 0 0 9px rgba(214, 63, 38, 0); } }
@@ -52,10 +55,10 @@ body.cd { margin: 0; color: var(--cd-ink); font: 15px/1.6 var(--cd-body); overfl
 a:hover > .cd-roll > span, button:hover > .cd-roll > span, .cd-row:hover .cd-roll > span, .cd-roll:hover > span { transform: translateY(-100%); }
 
 /* 标题：一行，克制 */
-.cd-title { margin: 0; font: 700 clamp(28px, 4.6vw, 48px)/1.1 var(--cd-display); letter-spacing: -.01em; }
+.cd-title { margin: 0; font: 400 clamp(34px, 5.6vw, 60px)/1.05 var(--cd-display); letter-spacing: .01em; }
 .cd-title mark { background: none; color: var(--cd-red); }
 .cd-sub { margin: 10px 0 0; color: var(--cd-mute); }
-.cd-h { display: flex; align-items: baseline; gap: 14px; margin: 0 0 6px; font: 700 20px/1.2 var(--cd-display); }
+.cd-h { display: flex; align-items: baseline; gap: 14px; margin: 0 0 6px; font: 400 24px/1.2 var(--cd-display); letter-spacing: .02em; }
 .cd-h i { flex: 1; align-self: center; height: 1px; background: var(--cd-line); position: relative; overflow: hidden; }
 .cd-h i::after { content: ""; position: absolute; inset: 0; width: 30%; background: var(--cd-red); transform: translateX(-100%); animation: cd-scan 5s var(--cd-ease) infinite; }
 .cd-h small { font: 12px var(--cd-mono); color: var(--cd-mute); }
@@ -70,7 +73,8 @@ a:hover > .cd-roll > span, button:hover > .cd-roll > span, .cd-row:hover .cd-rol
 .cd-row:hover .cd-note, .cd-row:hover .cd-no { color: color-mix(in srgb, var(--cd-paper) 65%, transparent); }
 .cd-row:hover .cd-roll > span + span { color: var(--cd-paper); }
 .cd-no { font: 12px var(--cd-mono); color: var(--cd-mute); transition: color .3s; }
-.cd-name { font: 700 18px/1.4 var(--cd-display); }
+.cd-name { font: 400 19px/1.4 var(--cd-display); letter-spacing: .02em; }
+.cd-title, .cd-h, .cd-name, .cd-brand b { font-synthesis: none; }
 .cd-note { color: var(--cd-mute); font-size: 14px; transition: color .3s; }
 .cd-arrow { display: inline-block; justify-self: end; text-align: right; font-family: var(--cd-mono); animation: cd-nudge 3.2s var(--cd-ease) infinite; animation-delay: var(--d, 0s); }
 .cd-row:hover .cd-arrow, a:hover > .cd-arrow { animation: cd-fly .6s var(--cd-ease) infinite; color: var(--cd-red); }
@@ -78,28 +82,28 @@ a:hover > .cd-roll > span, button:hover > .cd-roll > span, .cd-row:hover .cd-rol
 @keyframes cd-fly { 0% { transform: translateX(0); opacity: 1; } 49% { transform: translateX(14px); opacity: 0; } 50% { transform: translateX(-14px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 
 /* 药丸按钮与小标签 */
-.cd-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border: 1.5px solid var(--cd-ink); border-radius: 999px; font: 600 14px var(--cd-body); background: none; transition: background .25s, color .25s, border-color .25s; }
-.cd-pill:hover { background: var(--cd-ink); color: var(--cd-paper); }
+.cd-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border: 1.5px solid var(--cd-ink); border-radius: 0; font: 600 14px var(--cd-body); background: var(--cd-paper); box-shadow: 3px 3px 0 var(--cd-ink); transition: background .25s, color .25s, border-color .25s, box-shadow .25s; }
+.cd-pill:hover { background: var(--cd-ink); color: var(--cd-paper); box-shadow: 3px 3px 0 var(--cd-red); }
 .cd-pill.red { background: var(--cd-red); border-color: var(--cd-red); color: var(--cd-paper); }
-.cd-pill.red:hover { background: var(--cd-ink); border-color: var(--cd-ink); }
-.cd-tag { font: 12px var(--cd-mono); padding: 1px 8px; border: 1px solid var(--cd-line); border-radius: 4px; color: var(--cd-mute); }
-.cd-chip { padding: 3px 12px; border: 1.5px solid var(--cd-line); border-radius: 999px; background: none; font-size: 13px; transition: all .2s; }
+.cd-pill.red:hover { background: var(--cd-ink); border-color: var(--cd-ink); box-shadow: 3px 3px 0 var(--cd-red); }
+.cd-tag { font: 12px var(--cd-mono); padding: 1px 8px; border: 1px solid var(--cd-line); border-radius: 0; color: var(--cd-mute); }
+.cd-chip { padding: 3px 12px; border: 1.5px solid var(--cd-line); border-radius: 0; background: none; font-size: 13px; transition: all .2s; }
 .cd-chip:hover { border-color: var(--cd-ink); }
 .cd-chip[aria-pressed="true"] { background: var(--cd-ink); border-color: var(--cd-ink); color: var(--cd-paper); }
 
 /* 悬停预览：鼠标跟随的小图 */
-.cd-peek { position: fixed; left: 0; top: 0; z-index: 60; width: 220px; aspect-ratio: 4 / 3; pointer-events: none; border-radius: 8px; overflow: hidden; background: var(--cd-paper-2) center / cover; box-shadow: 0 0 0 1.5px var(--cd-ink), 0 14px 30px rgba(28, 27, 24, .22);
-  opacity: 0; transform: translate(-50%, -50%) scale(.7) rotate(-4deg); transition: opacity .25s, transform .35s var(--cd-spring); }
-.cd-peek.on { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-2deg); }
+.cd-peek { position: fixed; left: 0; top: 0; z-index: 60; width: 220px; aspect-ratio: 4 / 3; pointer-events: none; overflow: hidden; background: var(--cd-paper-2) center / cover; box-shadow: 0 0 0 1.5px var(--cd-ink), var(--cd-hard);
+  opacity: 0; transform: translate(-50%, -50%) scale(.85); transition: opacity .25s, transform .35s var(--cd-spring); }
+.cd-peek.on { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 
 /* 出现 */
 .cd-js [data-reveal] { opacity: 0; transform: translateY(16px); transition: opacity .7s var(--cd-ease), transform .7s var(--cd-ease); transition-delay: var(--rd, 0s); }
 .cd-js [data-reveal].in { opacity: 1; transform: none; }
 
 /* 子站返回条：Lab 里的每个作品都带一个 */
-.cd-back { position: fixed; left: 14px; top: 14px; z-index: 80; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; border-radius: 999px; font: 600 13px var(--cd-body); color: var(--cd-ink); background: color-mix(in srgb, var(--cd-paper) 86%, transparent); box-shadow: 0 0 0 1.5px var(--cd-ink); backdrop-filter: blur(8px); transition: background .25s, color .25s, transform .25s var(--cd-spring); }
+.cd-back { position: fixed; left: 14px; top: 14px; z-index: 80; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; font: 600 13px var(--cd-body); color: var(--cd-ink); background: color-mix(in srgb, var(--cd-paper) 86%, transparent); box-shadow: 0 0 0 1.5px var(--cd-ink); backdrop-filter: blur(8px); transition: background .25s, color .25s, transform .25s var(--cd-spring); }
 .cd-back:hover { background: var(--cd-ink); color: var(--cd-paper); transform: translateX(-3px); }
-.cd-back i { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--cd-red); color: var(--cd-paper); font: 700 11px var(--cd-display); font-style: normal; }
+.cd-back i { display: grid; place-items: center; width: 18px; height: 18px; background: var(--cd-red); color: var(--cd-paper); font: 700 11px var(--cd-display); font-style: normal; }
 
 .cd-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 24px var(--cd-gutter) 32px; font: 12px var(--cd-mono); color: var(--cd-mute); }
 

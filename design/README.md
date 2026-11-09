@@ -12,7 +12,7 @@ sh scripts/sync-design.sh      # 复制到 public/cd、sites/lab/cd、sites/game
 |---|---|
 | `cd.css` | 颜色、字体、网格纸背景、顶栏、链接行、药丸、悬停预览、返回条 |
 | `cd.js` | `data-roll` 文字滚动、`data-reveal` 淡入、`data-peek` 跟随小图、`data-magnet` 磁吸 |
-| `fonts/` | 抖音美好体（OFL） |
+| `fonts/` | 得意黑 Smiley Sans（OFL，裁到常用字，标题用）；抖音美好体保留未加载 |
 | `img/` | 豆探透明姿势、红印章 favicon |
 
 ## 用法
@@ -34,4 +34,6 @@ sh scripts/sync-design.sh      # 复制到 public/cd、sites/lab/cd、sites/game
 - 文字短。标题一行，说明一句，能不写就不写。
 - 一个强调色（朱红）。其他颜色只出现在作品自己的画面里。
 - 每个可点的东西都有反应：行变黑、文字上滚、箭头循环。
+- 一律直角，不用圆角和倾斜；卡片、按钮带直角硬投影（`--cd-hard`），悬停时抬起、投影变红（`--cd-hard-hi`）。和方块豆探一致。
+- 标题字得意黑只有一个字重，写 `font-weight: 400` 和 `font-synthesis: none`，别让浏览器伪造粗体。
 - 动效必须尊重 `prefers-reduced-motion`。

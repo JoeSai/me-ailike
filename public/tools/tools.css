@@ -1,13 +1,13 @@
 /* 工具卡片：首页“工具”区和 /tools/ 共用 */
 .tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: clamp(14px, 2.2vw, 26px); }
-.tcard { display: flex; flex-direction: column; gap: 12px; padding: 10px 10px 16px; border-radius: 10px; background: color-mix(in srgb, var(--cd-paper) 70%, white); box-shadow: 0 0 0 1.5px var(--cd-ink); transition: transform .45s var(--cd-spring), box-shadow .3s; }
-.tcard:hover, .cd-js .tcard[data-reveal].in:hover { transform: translateY(-6px) rotate(-.6deg); box-shadow: 0 0 0 1.5px var(--cd-ink), 0 10px 0 var(--cd-red); }
-.tcard-img { position: relative; display: block; aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden; background: var(--cd-ink); }
+.tcard { display: flex; flex-direction: column; gap: 12px; padding: 10px 10px 16px; background: color-mix(in srgb, var(--cd-paper) 70%, white); box-shadow: 0 0 0 1.5px var(--cd-ink), var(--cd-hard); transition: transform .45s var(--cd-spring), box-shadow .3s; }
+.tcard:hover, .cd-js .tcard[data-reveal].in:hover { transform: translate(-2px, -2px); box-shadow: 0 0 0 1.5px var(--cd-ink), var(--cd-hard-hi); }
+.tcard-img { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; box-shadow: 0 0 0 1.5px var(--cd-ink); background: var(--cd-ink); }
 .tcard-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--cd-ease); }
 .tcard-img img.px { image-rendering: pixelated; }
 .tcard:hover .tcard-img img { transform: scale(1.04); }
-.tcard-img em { position: absolute; left: 10px; top: 10px; padding: 1px 10px; border-radius: 999px; background: var(--cd-red); color: var(--cd-paper); font: 700 12px/1.6 var(--cd-display); font-style: normal; }
+.tcard-img em { position: absolute; left: 10px; top: 10px; padding: 1px 10px; background: var(--cd-red); color: var(--cd-paper); font: 400 14px/1.6 var(--cd-display); font-synthesis: none; font-style: normal; }
 .tcard-text { display: grid; gap: 4px; padding-inline: 4px; }
-.tcard-text b { font: 700 19px/1.3 var(--cd-display); }
+.tcard-text b { font: 400 22px/1.3 var(--cd-display); letter-spacing: .02em; font-synthesis: none; }
 .tcard-text small { color: var(--cd-mute); font-size: 14px; line-height: 1.55; }
 .tcard-go { margin-top: auto; padding-inline: 4px; font: 600 13px var(--cd-mono); color: var(--cd-red); }
